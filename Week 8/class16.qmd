@@ -1,0 +1,90 @@
+---
+title: "Class16"
+auhtor: Mahsa
+format: pdf
+---
+
+# Downstream Analysis 
+
+After downloading the data from remote computer, with each sample having its own directory containing the Kallisto output, we can import the transcript count estimates into R using:
+
+```{r}
+library(tximport)
+
+# setup the folder and filenames to read
+folders <- dir(pattern="SRR21568*")
+samples <- sub("_quant", "", folders)
+files <- file.path( folders, "abundance.h5" )
+names(files) <- samples
+
+txi.kallisto <- tximport(files, type = "kallisto", txOut = TRUE)
+```
+
+```{r}
+head(txi.kallisto$counts)
+```
+
+We can check how many transcripts we have for each sample:
+
+```{r}
+colSums(txi.kallisto$counts)
+```
+
+We can also check how many transcripts are detected in at least one sample:
+
+```{r}
+sum(rowSums(txi.kallisto$counts)>0)
+```
+
+We need ti filter out annotated transcripts with no reads, before subsequent analysis:
+
+```{r}
+to.keep <- rowSums(txi.kallisto$counts) > 0
+kset.nonzero <- txi.kallisto$counts[to.keep,]
+```
+
+And those with no change over the samples:
+
+```{r}
+keep2 <- apply(kset.nonzero,1,sd)>0
+x <- kset.nonzero[keep2,]
+
+```
+
+# **Principal Component Analysis**
+
+Now we compute the principal components:
+
+```{r}
+pca <- prcomp(t(x), scale=TRUE)
+summary(pca)
+```
+
+Now we can use the first two principal components as a co-ordinate system for visualizing the summarized transcriptomic profiles of each sample:
+
+```{r}
+plot(pca$x[,1], pca$x[,2],
+     col=c("blue","blue","red","red"),
+     xlab="PC1", ylab="PC2", pch=16)
+```
+
+Visualization with ggplot:
+
+```{r}
+library(ggplot2)
+library(ggrepel)
+
+# Make metadata object for the samples
+colData <- data.frame(condition = factor(rep(c("control", "treatment"), each = 2)))
+rownames(colData) <- colnames(txi.kallisto$counts)
+
+# Make the data.frame for ggplot 
+y <- as.data.frame(pca$x)
+y$Condition <- as.factor(colData$condition)
+
+ggplot(y) +
+  aes(PC1, PC2, col=Condition) +
+  geom_point() +
+  geom_text_repel(label=rownames(y)) +
+  theme_bw()
+```

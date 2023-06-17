@@ -1,0 +1,90 @@
+---
+title: "Class16"
+author: "Parsa Sazegar"
+format: pdf
+---
+
+### Downstream Analysis
+
+```{r}
+#  import the transcript count estimates into R using:
+
+library(tximport)
+
+# setup the folder and filenames to read
+folders <- dir(pattern="SRR21568*")
+samples <- sub("_quant", "", folders)
+files <- file.path( folders, "abundance.h5" )
+names(files) <- samples
+
+txi.kallisto <- tximport(files, type = "kallisto", txOut = TRUE)
+```
+
+```{r}
+# Showing the kalissto
+head(txi.kallisto$counts)
+```
+
+```{r}
+# number of transcripts for each sample:
+colSums(txi.kallisto$counts)
+```
+
+```{r}
+# number of transcripts detected in at least one sample:
+sum(rowSums(txi.kallisto$counts)>0)
+```
+
+```{r}
+# filtering out annotated transcripts with no reads
+
+to.keep <- rowSums(txi.kallisto$counts) > 0
+kset.nonzero <- txi.kallisto$counts[to.keep,]
+```
+
+```{r}
+# filtering those with no change over the samples:
+
+keep2 <- apply(kset.nonzero,1,sd)>0
+x <- kset.nonzero[keep2,]
+
+```
+
+### **Principal Component Analysis**
+
+```{r}
+# calculating the PCA
+
+pca <- prcomp(t(x), scale=TRUE)
+summary(pca)
+```
+
+```{r}
+# Visualizing the data with plot 
+
+plot(pca$x[,1], pca$x[,2],
+     col=c("blue","blue","red","red"),
+     xlab="PC1", ylab="PC2", pch=16)
+```
+
+```{r}
+# using ggplot for making the plot 
+
+library(ggplot2)
+library(ggrepel)
+
+# Make metadata object for the samples
+colData <- data.frame(condition = factor(rep(c("control", "treatment"), each = 2)))
+rownames(colData) <- colnames(txi.kallisto$counts)
+
+# Make the data.frame for ggplot 
+y <- as.data.frame(pca$x)
+y$Condition <- as.factor(colData$condition)
+
+#visualization with ggplot2 and ggrepel
+ggplot(y) +
+  aes(PC1, PC2, col=Condition) +
+  geom_point() +
+  geom_text_repel(label=rownames(y)) +
+  theme_bw()
+```
