@@ -1,0 +1,136 @@
+---
+title: "HomeWork6"
+author: "Mahsa Naeimi"
+date: "2023-05-24"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### **Section 1: Improving analysis code by writing functions**
+
+#### B.
+
+```{r}
+# Can you improve this analysis code?
+library(bio3d)
+# s1 <- read.pdb("4AKE")  # kinase with drug
+# s2 <- read.pdb("1AKE")  # kinase no drug
+# s3 <- read.pdb("1E4Y")  # kinase with drug
+# s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+# s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+# s3.chainA <- trim.pdb(s1, chain="A", elety="CA")
+# s1.b <- s1.chainA$atom$b
+# s2.b <- s2.chainA$atom$b
+# s3.b <- s3.chainA$atom$b
+# plotb3(s1.b, sse=s1.chainA, typ="l", ylab="Bfactor")
+# plotb3(s2.b, sse=s2.chainA, typ="l", ylab="Bfactor")
+# plotb3(s3.b, sse=s3.chainA, typ="l", ylab="Bfactor")
+
+#improving copy paste issues:
+s1 <- read.pdb("4AKE")  # kinase with drug
+s2 <- read.pdb("1AKE")  # kinase no drug
+s3 <- read.pdb("1E4Y")  # kinase with drug
+
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
+
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+
+plotb3(s1.b, sse = s1.chainA, typ = "l", ylab = "Bfactor")
+plotb3(s2.b, sse = s2.chainA, typ = "l", ylab = "Bfactor")
+plotb3(s3.b, sse = s3.chainA, typ = "l", ylab = "Bfactor")
+
+
+```
+
+We want to create a function to be able to visualize protein-drug interactions from PDB data:
+
+```{r}
+pr_dr <- function(file, chain, elmnt, fctr) {
+   plot_colors <- c("red", "blue", "green")
+     for (i in 1:length(file)) {
+  s1 <- read.pdb(file[i])
+
+  s1.chain <- trim.pdb(s1, chain = chain, elety = elmnt)
+  
+  atom_df <- s1.chain$atom
+   s1.fctr <- atom_df[, fctr] 
+     if (i == 1) {
+    plotb3(s1.fctr, sse = s1.chain, typ = "l", ylab = paste(toupper(fctr), "factor", sep = ""), col = plot_colors[i])
+     } else {
+    lines(s1.fctr, col = plot_colors[i])
+  }
+     }
+     legend("topright", title = "PDB File Name", file, fill = plot_colors, horiz=TRUE, cex = 0.5, inset = c(0.03, 0.06))
+}
+```
+
+```{r}
+# Testing the function for theses 3 protein: 
+files <- c("4AKE", "1AKE", "1E4Y")
+chains <- "A"
+elements <- "CA"
+factors <- "b"
+
+pr_dr(files, chains, elements, factors)
+```
+
+**Q1. What type of object is returned from the read.pdb() function?** This function returns information about the structure of the protein, its building block, and sequence of the protein from PDB
+
+```{r}
+read.pdb("4AKE") 
+
+```
+
+**Q2. What does the trim.pdb() function do?** This function trims the pdb object by selecting specific chains, residues, or atoms based on the provided parameters. In this case, **`trim.pdb()`** is used to extract a specific chain ("A") and element ("CA") from the pdb object.
+
+```{r}
+trim.pdb(s1, chain="A", elety="CA")
+```
+
+**Q3. What input parameter would turn off the marginal black and grey rectangles in the plots and what do they represent in this case?** To remove the black and grey rectangles, we need delete SSE( secondary structral element) from the chunk.
+
+```{r}
+plotb3(s1.b, typ = "l", ylab = "Bfactor")
+```
+
+**Q4. What would be a better plot to compare across the different proteins?** a single plot with different colored lines representing each protein's B-factor trends which allows us to compare multiple proteins at the same time.
+
+**Q5. Which proteins are more similar to each other in their B-factor trends. How could you quantify this?** From the clustering we can see that 1E4Y and 1AKE are the most similar ones.
+
+```{r}
+bfactors <- rbind(s1.b, s2.b, s3.b)
+dist_matrix <- dist(bfactors)
+hclust_result <- hclust(dist_matrix)
+plot(hclust_result)
+```
+
+**Q6. How would you generalize the original code above to work with any set of input protein structures?**
+
+```{r}
+pr_dr <- function(file, chain, elmnt, fctr) {
+   plot_colors <- c("red", "blue", "green")
+     for (i in 1:length(file)) {
+  s1 <- read.pdb(file[i])
+
+  s1.chain <- trim.pdb(s1, chain = chain, elety = elmnt)
+  
+  atom_df <- s1.chain$atom
+   s1.fctr <- atom_df[, fctr] 
+     if (i == 1) {
+    plotb3(s1.fctr, sse = s1.chain, typ = "l", ylab = paste(toupper(fctr), "factor", sep = ""), col = plot_colors[i])
+     } else {
+    lines(s1.fctr, col = plot_colors[i])
+  }
+     }
+     legend("topright", title = "PDB File Name", file, fill = plot_colors, horiz=TRUE, cex = 0.5, inset = c(0.03, 0.06))
+}
+```
+
+		
+
+	
