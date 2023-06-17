@@ -1,7 +1,6 @@
 # Classwork
 
-Data exploration and visualization in R 
-The exploratory data analysis mindset. Data visualization best practices. Simple base graphics (including scatterplots, histograms, bar graphs, dot chats, boxplots, and heatmaps). Building more complex charts with ggplot.
+Bioinformatics can be defined as the application of computational and analytical methods to complex biological problems. Bioinformatics is a rapidly maturing field that is driving the collection, analysis, and interpretation of the avalanche of data in modern life sciences and medical research.
 
 ## Content
 -   Class 04: [Bioinformatics data analysis with R](https://github.com/mahsan74/BIMM143/blob/main/Class04/Class04.pdf)
