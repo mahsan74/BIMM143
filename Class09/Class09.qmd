@@ -1,0 +1,153 @@
+---
+title: "Class09: Structural Bioinformatics pt1"
+author: "Mahsa Naeimi"
+format: pdf
+---
+
+# 1: Introduction to the RCSB Protein Data Bank
+
+To read the file we are going to use command `read.csv:`
+
+```{r}
+pdb_stats <- read.csv('Data Export Summary.csv', 
+                      row.names=1)
+head(pdb_stats)
+```
+
+we need to sum all the elements of the X.ray column:
+
+```{r}
+(pdb_stats$X.ray)
+```
+
+we are going to use `gsub` to remove the commas
+
+```{r}
+gsub(',','',pdb_stats$X.ray)
+```
+
+```{r}
+as.numeric(gsub(',','',pdb_stats$X.ray))
+
+```
+
+We use the sum command to get the sum
+
+```{r}
+n_xray <- sum(as.numeric(gsub(',','',pdb_stats$X.ray)))
+n_em <- sum(as.numeric(gsub(',','',pdb_stats$EM)))
+n_Total <-sum(as.numeric(gsub(',','',pdb_stats$Total)))
+
+```
+
+-   **Q1:** What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+    ```{r}
+    p_xray <- (n_xray /n_Total)
+    p_em <- (n_em) / n_Total
+
+    p_xray
+    p_em
+    p_Total = p_xray + p_em
+    p_Total
+    ```
+
+-   **Q2:** What proportion of structures in the PDB are protein?
+
+    ```{r}
+    total_protein <- as.numeric( gsub(',', '', pdb_stats[1, 7]) )
+     total_protein
+    ```
+
+    ```{r}
+    total_protein/ n_Total
+    ```
+
+-   **Q3:** Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB? 2064 stucture
+
+# 2. Visualizing the HIV-1 protease structure
+
+**Q4**: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure? **to see the structure more clear and get better visualization**
+
+**Q5**: There is a critical "conserved" water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have? **HOH 308**
+
+**Q6**: Generate and save a figure clearly showing the two distinct chains of HIV-protease along with the ligand. You might also consider showing the catalytic residues ASP 25 in each chain and the critical water (we recommend *"Ball & Stick"* for these side-chains). Add this figure to your Quarto document.
+
+Showing ligand in spacefilled presentation (1HSG model) :
+
+![](1HSG%202.png)
+
+Showing ater molecules surrounding the model with critical water molecule selected (1HSG model):
+
+![](1HSG-4.png)
+
+Showing residue ASP 25 in two chains (1HSG model):
+
+![](1HSG%203.png)
+
+# 3. Introduction to Bio3D in R
+
+```{r}
+#install.packages("bio3d")
+library(bio3d)
+pdb <-  read.pdb("1hsg")
+```
+
+```{r}
+
+```
+
+```{r}
+pdb
+```
+
+**Q7:** How many amino acid residues are there in this pdb object?
+
+198
+
+**Q8:** Name one of the two non-protein residues? 
+
+HOH and KM1
+
+**Q9:** How many protein chains are in this structure? 
+
+2 chains
+
+```{r}
+attributes(pdb)
+```
+
+```{r}
+head(pdb$atom)
+```
+
+## Predicting functional motions of a single structure by NMA
+
+for thhis part we are going to read a new PDB structure of Adenylate Kinase and perform Normal mode analysis:
+
+```{r}
+adk <- read.pdb('6s36')
+```
+
+```{r}
+adk
+```
+
+with nma or normal mode analysis we can predict protein flexibility and potential functional motions:
+
+```{r}
+m <- nma(adk)
+```
+
+```{r}
+class(m)
+plot(m)
+```
+
+To view a "movie" of these predicted motions we generate a molecular "trajectory" with the `mktrj()` function and load it in the Mol\* :
+
+```{r}
+mktrj(m, file="adk_m7.pdb")
+```
+
+Then we were able to generate the animation in Mol\*.
